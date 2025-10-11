@@ -1,0 +1,6 @@
+bleak
+customtkinter
+pillow
+pystray
+plyer
+psutil

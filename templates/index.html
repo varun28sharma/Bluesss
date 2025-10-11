@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueLock Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .status-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .device-section {
+            margin-bottom: 30px;
+        }
+
+        .device-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .device-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+        }
+
+        .device-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .device-address {
+            color: #666;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .log-section {
+            margin-top: 30px;
+        }
+
+        .log-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .log-container {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            height: 200px;
+            overflow-y: auto;
+            border: 2px solid #333;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .device-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+
+        .device-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .device-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .device-item.selected {
+            border-color: #667eea;
+            background: #e7f3ff;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #d63031;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 BlueLock</h1>
+            <div class="subtitle">Bluetooth Proximity Security</div>
+        </div>
+
+        <div class="status-card">
+            <h3>Status</h3>
+            <div class="status-indicator" id="status">Not Monitoring</div>
+        </div>
+
+        <div class="device-section">
+            <h3>🎯 Target Device</h3>
+            <div id="current-device" class="device-info">
+                <div class="device-name">No device configured</div>
+                <div class="device-address">Select a device below</div>
+            </div>
+        </div>
+
+        <div class="device-section">
+            <h3>📱 Available Devices</h3>
+            <div id="device-list" class="device-list">
+                <div class="loading">Loading devices...</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-success" id="refresh-btn" onclick="refreshDevices()">
+                🔄 Refresh
+            </button>
+            <button class="btn btn-primary" id="start-btn" onclick="startMonitoring()" disabled>
+                ▶️ Start
+            </button>
+            <button class="btn btn-secondary" id="stop-btn" onclick="stopMonitoring()" disabled>
+                ⏹️ Stop
+            </button>
+        </div>
+
+        <div class="log-section">
+            <h3>📋 Activity Log</h3>
+            <div class="log-container" id="log-container">
+                <div class="log-entry">System ready...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedDevice = null;
+        let isMonitoring = false;
+        let statusInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshDevices();
+            startStatusUpdates();
+        });
+
+        function startStatusUpdates() {
+            statusInterval = setInterval(updateStatus, 2000);
+        }
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update monitoring status
+                    isMonitoring = data.monitoring;
+                    document.getElementById('status').textContent = 
+                        isMonitoring ? 'Monitoring Active' : 'Not Monitoring';
+                    
+                    // Update buttons
+                    document.getElementById('start-btn').disabled = 
+                        isMonitoring || !selectedDevice;
+                    document.getElementById('stop-btn').disabled = !isMonitoring;
+                    
+                    // Update current device
+                    if (data.device) {
+                        document.getElementById('current-device').innerHTML = `
+                            <div class="device-name">${data.device.name}</div>
+                            <div class="device-address">${data.device.address}</div>
+                        `;
+                        selectedDevice = data.device;
+                    }
+                    
+                    // Update log
+                    if (data.log && data.log.length > 0) {
+                        const logContainer = document.getElementById('log-container');
+                        logContainer.innerHTML = data.log.map(entry => 
+                            `<div class="log-entry">${entry}</div>`
+                        ).join('');
+                        logContainer.scrollTop = logContainer.scrollHeight;
+                    }
+                })
+                .catch(error => {
+                    console.error('Status update error:', error);
+                });
+        }
+
+        function refreshDevices() {
+            const deviceList = document.getElementById('device-list');
+            deviceList.innerHTML = '<div class="loading">Scanning for devices...</div>';
+            
+            fetch('/api/devices')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.devices.length > 0) {
+                        deviceList.innerHTML = data.devices.map(device => `
+                            <div class="device-item" onclick="selectDevice('${device.address}', '${device.name}')">
+                                <div class="device-name">${device.name || 'Unknown Device'}</div>
+                                <div class="device-address">${device.address}</div>
+                            </div>
+                        `).join('');
+                    } else {
+                        deviceList.innerHTML = `
+                            <div class="error">
+                                ${data.error || 'No devices found. Make sure Bluetooth devices are connected and nearby.'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    deviceList.innerHTML = `
+                        <div class="error">
+                            Failed to load devices: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+
+        function selectDevice(address, name) {
+            // Update UI selection
+            document.querySelectorAll('.device-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.device-item').classList.add('selected');
+            
+            // Configure device
+            fetch('/api/configure', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    address: address,
+                    name: name
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    selectedDevice = { address, name };
+                    document.getElementById('current-device').innerHTML = `
+                        <div class="device-name">${name}</div>
+                        <div class="device-address">${address}</div>
+                    `;
+                    document.getElementById('start-btn').disabled = false;
+                } else {
+                    alert('Failed to configure device: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Configuration error: ' + error.message);
+            });
+        }
+
+        function startMonitoring() {
+            if (!selectedDevice) {
+                alert('Please select a device first');
+                return;
+            }
+            
+            fetch('/api/start', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Failed to start monitoring: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Start error: ' + error.message);
+            });
+        }
+
+        function stopMonitoring() {
+            fetch('/api/stop', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Failed to stop monitoring: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Stop error: ' + error.message);
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+        });
+    </script>
+</body>
+</html>
