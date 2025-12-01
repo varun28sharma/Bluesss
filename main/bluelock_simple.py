@@ -42,12 +42,14 @@ def run_powershell(command):
 
 
 def get_connected_device():
-    """Find the first CONNECTED Bluetooth audio device (Status = OK)."""
-    ps_command = """
-    Get-PnpDevice -Class Bluetooth | Where-Object {$_.Status -eq 'OK'} |
-    Select-Object FriendlyName, InstanceId, Status | ConvertTo-Json -Compress
+    """Find a CONNECTED Bluetooth audio device."""
+    
+    # Check audio endpoints - this shows actual connection status
+    ps_audio = """
+    Get-PnpDevice -Class AudioEndpoint | Where-Object {$_.Status -eq 'OK'} |
+    Select-Object FriendlyName, InstanceId | ConvertTo-Json -Compress
     """
-    output = run_powershell(ps_command)
+    output = run_powershell(ps_audio)
     
     if not output:
         return None
@@ -61,32 +63,28 @@ def get_connected_device():
             name = (d.get("FriendlyName") or "").strip()
             instance_id = (d.get("InstanceId") or "").strip()
             
-            # Skip system/adapter entries - only want actual devices
             if not name or not instance_id:
                 continue
-            if "adapter" in name.lower():
-                continue
-            if "enumerator" in name.lower():
-                continue
-            if "radio" in name.lower():
-                continue
-            if "mediatek" in name.lower():
-                continue
-            if "intel" in name.lower():
-                continue
-            if "realtek" in name.lower():
-                continue
-            if "broadcom" in name.lower():
-                continue
-            if "qualcomm" in name.lower():
-                continue
             
-            # Found a connected device!
+            name_lower = name.lower()
+            
+            # Skip built-in audio devices
+            if "realtek" in name_lower:
+                continue
+            if "internal" in name_lower:
+                continue
+            if "speakers" in name_lower and "bluetooth" not in name_lower:
+                continue
+            if "microphone array" in name_lower:
+                continue
+                
+            # Found a connected Bluetooth audio device!
             return {"name": name, "instance_id": instance_id}
-        
-        return None
+            
     except:
-        return None
+        pass
+    
+    return None
 
 
 def is_device_connected(instance_id):
