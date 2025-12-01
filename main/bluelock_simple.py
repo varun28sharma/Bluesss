@@ -70,6 +70,16 @@ def get_connected_device():
                 continue
             if "radio" in name.lower():
                 continue
+            if "mediatek" in name.lower():
+                continue
+            if "intel" in name.lower():
+                continue
+            if "realtek" in name.lower():
+                continue
+            if "broadcom" in name.lower():
+                continue
+            if "qualcomm" in name.lower():
+                continue
             
             # Found a connected device!
             return {"name": name, "instance_id": instance_id}
