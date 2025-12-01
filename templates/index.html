@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueLock - Bluetooth Screen Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            color: #888;
+            font-size: 1rem;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: #4fc3f7;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-connected {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+        
+        .status-disconnected {
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+        }
+        
+        .status-idle {
+            background: rgba(158, 158, 158, 0.2);
+            color: #bdbdbd;
+        }
+        
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .dot-green { background: #4caf50; }
+        .dot-red { background: #f44336; }
+        .dot-gray { background: #9e9e9e; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .device-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .device-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .device-item.selected {
+            border: 2px solid #4fc3f7;
+        }
+        
+        .device-name {
+            font-weight: 500;
+        }
+        
+        .device-status {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(79, 195, 247, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: #fff;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #888;
+        }
+        
+        .info-value {
+            font-weight: 500;
+        }
+        
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: #4fc3f7;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            background: rgba(79, 195, 247, 0.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #4fc3f7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔵 BlueLock</h1>
+            <p>Bluetooth Screen Control</p>
+        </header>
+        
+        <!-- Status Card -->
+        <div class="card">
+            <h2>📊 Status</h2>
+            <div id="status-container">
+                <div class="status-badge status-idle">
+                    <span class="dot dot-gray"></span>
+                    <span>Not Monitoring</span>
+                </div>
+            </div>
+            <div id="status-info" style="margin-top: 16px; display: none;">
+                <div class="info-row">
+                    <span class="info-label">Device</span>
+                    <span class="info-value" id="current-device">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Connection</span>
+                    <span class="info-value" id="connection-status">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Last Check</span>
+                    <span class="info-value" id="last-check">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Devices Card -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2>📱 Bluetooth Devices</h2>
+                <button class="refresh-btn" onclick="loadDevices()">🔄 Refresh</button>
+            </div>
+            <div id="devices-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions Card -->
+        <div class="card">
+            <h2>⚡ Actions</h2>
+            <button id="start-btn" class="btn btn-primary" onclick="startMonitoring()" disabled>
+                Start Monitoring
+            </button>
+            <button id="stop-btn" class="btn btn-danger" onclick="stopMonitoring()" style="display: none;">
+                Stop Monitoring
+            </button>
+            <button class="btn btn-secondary" onclick="turnOffScreen()">
+                Turn Off Screen Now
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        let selectedDevice = null;
+        let statusInterval = null;
+        
+        // Load devices on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDevices();
+            loadStatus();
+            statusInterval = setInterval(loadStatus, 3000);
+        });
+        
+        async function loadDevices() {
+            const container = document.getElementById('devices-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await fetch('/api/devices');
+                const data = await response.json();
+                
+                if (data.devices.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No Bluetooth audio devices found</div>';
+                    return;
+                }
+                
+                container.innerHTML = '<div class="device-list">' + 
+                    data.devices.map(device => `
+                        <div class="device-item" onclick="selectDevice('${device.name}', '${device.instance_id}')" 
+                             data-id="${device.instance_id}">
+                            <div>
+                                <div class="device-name">${device.name}</div>
+                                <div class="device-status">${device.connected ? '🟢 Connected' : '⚪ Not Connected'}</div>
+                            </div>
+                        </div>
+                    `).join('') + '</div>';
+                    
+            } catch (error) {
+                container.innerHTML = '<div class="empty-state">Failed to load devices</div>';
+            }
+        }
+        
+        function selectDevice(name, id) {
+            selectedDevice = { name, id };
+            
+            // Update UI
+            document.querySelectorAll('.device-item').forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.id === id) {
+                    item.classList.add('selected');
+                }
+            });
+            
+            document.getElementById('start-btn').disabled = false;
+        }
+        
+        async function startMonitoring() {
+            if (!selectedDevice) return;
+            
+            try {
+                const response = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        device_name: selectedDevice.name,
+                        device_id: selectedDevice.id
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    loadStatus();
+                }
+            } catch (error) {
+                alert('Failed to start monitoring');
+            }
+        }
+        
+        async function stopMonitoring() {
+            try {
+                await fetch('/api/stop', { method: 'POST' });
+                loadStatus();
+            } catch (error) {
+                alert('Failed to stop monitoring');
+            }
+        }
+        
+        async function turnOffScreen() {
+            try {
+                await fetch('/api/screen-off', { method: 'POST' });
+            } catch (error) {
+                alert('Failed to turn off screen');
+            }
+        }
+        
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                const statusContainer = document.getElementById('status-container');
+                const statusInfo = document.getElementById('status-info');
+                const startBtn = document.getElementById('start-btn');
+                const stopBtn = document.getElementById('stop-btn');
+                
+                if (status.is_monitoring) {
+                    const isConnected = status.is_connected;
+                    statusContainer.innerHTML = `
+                        <div class="status-badge ${isConnected ? 'status-connected' : 'status-disconnected'}">
+                            <span class="dot ${isConnected ? 'dot-green' : 'dot-red'}"></span>
+                            <span>${isConnected ? 'Connected' : 'Disconnected'}</span>
+                        </div>
+                    `;
+                    
+                    statusInfo.style.display = 'block';
+                    document.getElementById('current-device').textContent = status.device_name || '-';
+                    document.getElementById('connection-status').textContent = isConnected ? '✅ In Range' : '❌ Out of Range';
+                    document.getElementById('last-check').textContent = status.last_check || '-';
+                    
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'block';
+                } else {
+                    statusContainer.innerHTML = `
+                        <div class="status-badge status-idle">
+                            <span class="dot dot-gray"></span>
+                            <span>Not Monitoring</span>
+                        </div>
+                    `;
+                    statusInfo.style.display = 'none';
+                    startBtn.style.display = 'block';
+                    stopBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to load status');
+            }
+        }
+    </script>
+</body>
+</html>
